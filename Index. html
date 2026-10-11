@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MedExpress - 2-3 Hour Medical Delivery Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 pb-28 antialiased font-sans">
+
+  <!-- Top Sticky Header -->
+  <header class="bg-emerald-700 text-white sticky top-0 z-30 shadow-md">
+    <div class="max-w-md mx-auto px-4 pt-3 pb-2 flex items-center justify-between">
+      <div>
+        <div class="flex items-center gap-1.5">
+          <span class="bg-white text-emerald-800 text-[10px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">Demo</span>
+          <h1 class="text-base font-bold tracking-tight">MedExpress Pharmacy</h1>
+        </div>
+        <p class="text-[11px] text-emerald-200 flex items-center gap-1 mt-0.5">
+          <i class="fa-solid fa-bolt text-yellow-300"></i> Guaranteed 2–3 Hours Doorstep Delivery
+        </p>
+      </div>
+      <button onclick="openAdminModal()" class="text-[11px] bg-emerald-800/80 hover:bg-emerald-800 px-2.5 py-1 rounded-md text-emerald-100 flex items-center gap-1">
+        <i class="fa-solid fa-lock text-[10px]"></i> Admin
+      </button>
+    </div>
+
+    <!-- Live Search & Category Bar -->
+    <div class="max-w-md mx-auto px-4 pb-3 pt-1 space-y-2">
+      <div class="relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+        <input 
+          id="searchInput" 
+          oninput="filterAndRender()"
+          type="text" 
+          placeholder="Search Dolo, Cetirizine, Cough Syrup, etc..." 
+          class="w-full pl-9 pr-4 py-2 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white shadow-inner"
+        />
+      </div>
+      
+      <!-- Categories Pill Bar -->
+      <div class="flex gap-1.5 overflow-x-auto no-scrollbar text-[11px] pt-0.5">
+        <button onclick="setCategory('All')" class="cat-pill bg-emerald-900 text-white font-medium px-3 py-1 rounded-full whitespace-nowrap">All Items</button>
+        <button onclick="setCategory('Tablets')" class="cat-pill bg-emerald-800/60 text-emerald-100 font-medium px-3 py-1 rounded-full whitespace-nowrap">Tablets & Strips</button>
+        <button onclick="setCategory('Syrups')" class="cat-pill bg-emerald-800/60 text-emerald-100 font-medium px-3 py-1 rounded-full whitespace-nowrap">Syrups & Tonics</button>
+        <button onclick="setCategory('First Aid')" class="cat-pill bg-emerald-800/60 text-emerald-100 font-medium px-3 py-1 rounded-full whitespace-nowrap">First Aid & Ointments</button>
+        <button onclick="setCategory('Baby & Mother')" class="cat-pill bg-emerald-800/60 text-emerald-100 font-medium px-3 py-1 rounded-full whitespace-nowrap">Baby & Mother Care</button>
+        <button onclick="setCategory('Supplements')" class="cat-pill bg-emerald-800/60 text-emerald-100 font-medium px-3 py-1 rounded-full whitespace-nowrap">Supplements</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Product Feed -->
+  <main class="max-w-md mx-auto px-3.5 py-3">
+    <div id="productGrid" class="grid grid-cols-2 gap-2.5">
+      <!-- Dynamic Products -->
+    </div>
+  </main>
+
+  <!-- Bottom Floating Cart Summary -->
+  <div id="cartBar" class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 shadow-2xl hidden z-20">
+    <div class="max-w-md mx-auto flex items-center justify-between">
+      <div>
+        <p class="text-[11px] text-slate-500 font-medium" id="cartItemCount">0 items</p>
+        <p class="text-base font-extrabold text-emerald-800 leading-none" id="cartTotal">₹0</p>
+      </div>
+      <button onclick="openCheckoutModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-sm transition active:scale-95">
+        <span>Proceed to Checkout</span>
+        <i class="fa-solid fa-arrow-right text-[11px]"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Checkout & Geolocation Modal -->
+  <div id="checkoutModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs hidden z-40 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-4 space-y-3.5 max-h-[92vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-2">
+        <div>
+          <h2 class="font-bold text-slate-800 text-sm">Review & Place Order</h2>
+          <p class="text-[11px] text-emerald-600 font-medium">⚡ Scheduled for 2–3 Hour Delivery</p>
+        </div>
+        <button onclick="closeCheckoutModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold px-2">&times;</button>
+      </div>
+
+      <!-- Items Summary Box -->
+      <div id="orderSummary" class="text-[11px] bg-slate-50 p-2.5 rounded-lg space-y-1.5 max-h-32 overflow-y-auto border border-slate-200"></div>
+
+      <!-- Live GPS Location Tracker Button -->
+      <div class="space-y-1">
+        <label class="text-[11px] font-bold text-slate-700 block">Delivery GPS Location</label>
+        <button id="locBtn" onclick="detectGPSLocation()" type="button" class="w-full bg-emerald-50 border border-emerald-300 text-emerald-800 py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 hover:bg-emerald-100 transition">
+          <i class="fa-solid fa-location-crosshairs text-emerald-600"></i>
+          <span id="locStatusText">Pin My Live Location (1-Click)</span>
+        </button>
+        <p id="coordsDisplay" class="text-[10px] text-emerald-700 font-mono hidden text-center"></p>
+      </div>
+
+      <!-- Customer Address Fields -->
+      <div class="space-y-2 text-xs">
+        <div>
+          <label class="block font-medium text-slate-600 mb-0.5">Your Name</label>
+          <input id="custName" type="text" placeholder="e.g. Rahul Sharma" class="w-full p-2 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="block font-medium text-slate-600 mb-0.5">Contact Number</label>
+          <input id="custPhone" type="tel" placeholder="10-digit mobile number" class="w-full p-2 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-emerald-500" />
+        </div>
+        <div>
+          <label class="block font-medium text-slate-600 mb-0.5">House / Flat / Street Landmark</label>
+          <input id="custAddress" type="text" placeholder="e.g. Flat 302, Green Valley Apartments" class="w-full p-2 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-emerald-500" />
+        </div>
+      </div>
+
+      <!-- Send Direct WhatsApp Order -->
+      <button onclick="dispatchOrder()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition active:scale-95">
+        <i class="fa-brands fa-whatsapp text-base"></i>
+        <span>Send Order to Medical Store</span>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Demo Store WhatsApp Number (Replace with the chemist's real number to demonstrate)
+    let STORE_WHATSAPP_NUMBER = "919876543210";
+
+    // 20 Demo Medicines Ready-to-Show
+    const demoCatalog = [
+      { id: 1, name: "Dolo 650mg Tablet", cat: "Tablets", price: 34, unit: "Strip of 15", img: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=200&auto=format&fit=crop&q=60" },
+      { id: 2, name: "Pan 40 Tablet", cat: "Tablets", price: 155, unit: "Strip of 15", img: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=200&auto=format&fit=crop&q=60" },
+      { id: 3, name: "Azithral 500mg Tablet", cat: "Tablets", price: 119, unit: "Strip of 5", img: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=200&auto=format&fit=crop&q=60" },
+      { id: 4, name: "Cetirizine 10mg (Alerid)", cat: "Tablets", price: 22, unit: "Strip of 10", img: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=200&auto=format&fit=crop&q=60" },
+      { id: 5, name: "Augmentin 625 Duo Tablet", cat: "Tablets", price: 205, unit: "Strip of 10", img: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=200&auto=format&fit=crop&q=60" },
+      { id: 6, name: "Benadryl Cough Formula", cat: "Syrups", price: 135, unit: "100ml Bottle", img: "https://images.unsplash.com/photo-1550572017-edd951aa8f72?w=200&auto=format&fit=crop&q=60" },
+      { id: 7, name: "Ascoril-D Cough Syrup", cat: "Syrups", price: 118, unit: "100ml Bottle", img: "https://images.unsplash.com/photo-1550572017-edd951aa8f72?w=200&auto=format&fit=crop&q=60" },
+      { id: 8, name: "Gelusil Antacid Liquid (Mint)", cat: "Syrups", price: 140, unit: "200ml Bottle", img: "https://images.unsplash.com/photo-1550572017-edd951aa8f72?w=200&auto=format&fit=crop&q=60" },
+      { id: 9, name: "Betadine 10% Solution", cat: "First Aid", price: 115, unit: "100ml Bottle", img: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=200&auto=format&fit=crop&q=60" },
+      { id: 10, name: "Soframycin Skin Cream", cat: "First Aid", price: 62, unit: "30g Tube", img: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=200&auto=format&fit=crop&q=60" },
+      { id: 11, name: "Hansaplast Waterproof Bandages", cat: "First Aid", price: 45, unit: "Pack of 10", img: "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=200&auto=format&fit=crop&q=60" },
+      { id: 12, name: "Moov Pain Relief Spray", cat: "First Aid", price: 165, unit: "50g Can", img: "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=200&auto=format&fit=crop&q=60" },
+      { id: 13, name: "Volini Pain Relief Gel", cat: "First Aid", price: 95, unit: "30g Tube", img: "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=200&auto=format&fit=crop&q=60" },
+      { id: 14, name: "Pampers Baby Dry Diapers (M)", cat: "Baby & Mother", price: 549, unit: "Pack of 34", img: "https://images.unsplash.com/photo-1550572017-edd951aa8f72?w=200&auto=format&fit=crop&q=60" },
+      { id: 15, name: "Himalaya Baby Lotion", cat: "Baby & Mother", price: 165, unit: "200ml Bottle", img: "https://images.unsplash.com/photo-1550572017-edd951aa8f72?w=200&auto=format&fit=crop&q=60" },
+      { id: 16, name: "Woodward's Gripe Water", cat: "Baby & Mother", price: 80, unit: "130ml Bottle", img: "https://images.unsplash.com/photo-1550572017-edd951aa8f72?w=200&auto=format&fit=crop&q=60" },
+      { id: 17, name: "Limcee 500mg Vitamin C", cat: "Supplements", price: 25, unit: "Strip of 15 Chewable", img: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=200&auto=format&fit=crop&q=60" },
+      { id: 18, name: "Becadexamin Multivitamin", cat: "Supplements", price: 46, unit: "Bottle of 30 Softgels", img: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=200&auto=format&fit=crop&q=60" },
+      { id: 19, name: "Revital H Daily Health", cat: "Supplements", price: 310, unit: "Pack of 30 Capsules", img: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=200&auto=format&fit=crop&q=60" },
+      { id: 20, name: "Electral Oral Rehydration Salts", cat: "Supplements", price: 22, unit: "21.8g Sachet", img: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=200&auto=format&fit=crop&q=60" }
+    ];
+
+    let cart = {};
+    let activeCat = "All";
+    let pinnedLocation = null;
+
+    function filterAndRender() {
+      const q = document.getElementById("searchInput").value.toLowerCase().trim();
+      const grid = document.getElementById("productGrid");
+      grid.innerHTML = "";
+
+      const filtered = demoCatalog.filter(item => {
+        const matchesCategory = activeCat === "All" || item.cat === activeCat;
+        const matchesSearch = item.name.toLowerCase().includes(q) || item.cat.toLowerCase().includes(q);
+        return matchesCategory && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="col-span-2 py-10 text-center text-slate-400 text-xs">No matching medicines found.</div>`;
+        return;
+      }
+
+      filtered.forEach(p => {
+        const qty = cart[p.id] || 0;
+        const card = document.createElement("div");
+        card.className = "bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col justify-between";
+        card.innerHTML = `
+          <div>
+            <div class="h-20 w-full bg-slate-50 rounded-lg overflow-hidden mb-2">
+              <img src="${p.img}" alt="${p.name}" class="h-full w-full object-cover">
+            </div>
+            <span class="text-[9px] font-bold text-emerald-700 uppercase tracking-wide bg-emerald-50 px-1.5 py-0.5 rounded">${p.cat}</span>
+            <h3 class="text-xs font-semibold text-slate-800 line-clamp-2 mt-1 leading-snug">${p.name}</h3>
+            <p class="text-[10px] text-slate-400 mt-0.5">${p.unit}</p>
+          </div>
+          <div class="mt-2.5 flex items-center justify-between pt-2 border-t border-slate-100">
+            <span class="text-xs font-bold text-slate-900">₹${p.price}</span>
+            ${qty === 0 ? `
+              <button onclick="changeQty(${p.id}, 1)" class="bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white px-2.5 py-1 rounded-md text-[11px] font-bold border border-emerald-200 transition">
+                + Add
+              </button>
+            ` : `
+              <div class="flex items-center gap-1.5 bg-emerald-50 border border-emerald-300 rounded-md px-1.5 py-0.5 text-xs text-emerald-800">
+                <button onclick="changeQty(${p.id}, -1)" class="font-extrabold px-1">-</button>
+                <span class="font-bold text-[11px]">${qty}</span>
+                <button onclick="changeQty(${p.id}, 1)" class="font-extrabold px-1">+</button>
+              </div>
+            `}
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      refreshCartBar();
+    }
+
+    function setCategory(cat) {
+      activeCat = cat;
+      document.querySelectorAll(".cat-pill").forEach(el => {
+        if (el.textContent.includes(cat) || (cat === "All" && el.textContent.includes("All Items"))) {
+          el.className = "cat-pill bg-emerald-900 text-white font-medium px-3 py-1 rounded-full whitespace-nowrap";
+        } else {
+          el.className = "cat-pill bg-emerald-800/60 text-emerald-100 font-medium px-3 py-1 rounded-full whitespace-nowrap";
+        }
+      });
+      filterAndRender();
+    }
+
+    function changeQty(id, delta) {
+      cart[id] = (cart[id] || 0) + delta;
+      if (cart[id] <= 0) delete cart[id];
+      filterAndRender();
+    }
+
+    function refreshCartBar() {
+      const bar = document.getElementById("cartBar");
+      const totalUnits = Object.values(cart).reduce((sum, val) => sum + val, 0);
+      let totalPrice = 0;
+      Object.entries(cart).forEach(([id, count]) => {
+        const item = demoCatalog.find(x => x.id === parseInt(id));
+        if (item) totalPrice += item.price * count;
+      });
+
+      if (totalUnits > 0) {
+        bar.classList.remove("hidden");
+        document.getElementById("cartItemCount").innerText = `${totalUnits} item(s) selected`;
+        document.getElementById("cartTotal").innerText = `₹${totalPrice}`;
+      } else {
+        bar.classList.add("hidden");
+      }
+    }
+
+    function openCheckoutModal() {
+      const summary = document.getElementById("orderSummary");
+      summary.innerHTML = "";
+      Object.entries(cart).forEach(([id, count]) => {
+        const item = demoCatalog.find(x => x.id === parseInt(id));
+        if (item) {
+          summary.innerHTML += `
+            <div class="flex justify-between items-center text-slate-700">
+              <span class="font-medium">${item.name} × ${count}</span>
+              <span class="font-bold">₹${item.price * count}</span>
+            </div>
+          `;
+        }
+      });
+      document.getElementById("checkoutModal").classList.remove("hidden");
+    }
+
+    function closeCheckoutModal() {
+      document.getElementById("checkoutModal").classList.add("hidden");
+    }
+
+    function detectGPSLocation() {
+      const statusText = document.getElementById("locStatusText");
+      const coordsDisplay = document.getElementById("coordsDisplay");
+
+      if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+      }
+
+      statusText.innerText = "Detecting GPS Pin...";
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          pinnedLocation = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude
+          };
+          statusText.innerText = "Location Attached ✓";
+          coordsDisplay.classList.remove("hidden");
+          coordsDisplay.innerText = `Coordinates: ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+        },
+        err => {
+          statusText.innerText = "Permission Denied";
+          alert("Please enable location services to auto-detect your delivery address.");
+        },
+        { enableHighAccuracy: true, timeout: 7000 }
+      );
+    }
+
+    function dispatchOrder() {
+      const name = document.getElementById("custName").value.trim() || "Customer (Demo)";
+      const phone = document.getElementById("custPhone").value.trim() || "Not specified";
+      const address = document.getElementById("custAddress").value.trim() || "Not specified";
+
+      let orderMsg = `*🚨 NEW MEDICAL STORE ORDER (DEMO)*\n`;
+      orderMsg += `*Delivery SLA:* 2 – 3 Hours Express Delivery\n\n`;
+      orderMsg += `*Customer Details:*\n• Name: ${name}\n• Phone: ${phone}\n• Address: ${address}\n\n`;
+
+      if (pinnedLocation) {
+        orderMsg += `*📍 Exact Google Maps Delivery Pin:*\nhttps://www.google.com/maps?q=${pinnedLocation.lat},${pinnedLocation.lng}\n\n`;
+      } else {
+        orderMsg += `*📍 Location Pin:* Customer did not attach GPS\n\n`;
+      }
+
+      orderMsg += `*Ordered Items:*\n`;
+      let grandTotal = 0;
+      Object.entries(cart).forEach(([id, count]) => {
+        const item = demoCatalog.find(x => x.id === parseInt(id));
+        if (item) {
+          orderMsg += `• ${item.name} (${item.unit}) × ${count} = ₹${item.price * count}\n`;
+          grandTotal += item.price * count;
+        }
+      });
+
+      orderMsg += `\n*Total Payable: ₹${grandTotal}*\n`;
+      orderMsg += `_Please acknowledge and begin packing._`;
+
+      const waLink = `https://wa.me/${STORE_WHATSAPP_NUMBER}?text=${encodeURIComponent(orderMsg)}`;
+      window.open(waLink, "_blank");
+    }
+
+    function openAdminModal() {
+      const num = prompt("Enter Chemist's WhatsApp Number (Country code + 10 digits):", STORE_WHATSAPP_NUMBER);
+      if (num) {
+        STORE_WHATSAPP_NUMBER = num.replace(/\+/g, '').trim();
+        alert("WhatsApp destination updated to: " + STORE_WHATSAPP_NUMBER);
+      }
+    }
+
+    // Initialize display
+    filterAndRender();
+  </script>
+</body>
+</html>
